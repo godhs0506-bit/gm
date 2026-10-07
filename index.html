@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>우리 동네 상식 퀴즈 게임</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Confetti library for celebration effect -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Noto Sans KR font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      touch-action: manipulation;
+    }
+    .font-cute {
+      font-family: 'Jua', sans-serif;
+    }
+    @keyframes bounce-gentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-gentle {
+      animation: bounce-gentle 2s infinite ease-in-out;
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.85); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop {
+      animation: popIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+  </style>
+</head>
+
+<body class="bg-amber-50 text-slate-800 min-h-screen flex flex-col justify-between selection:bg-amber-200">
+
+  <header class="bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500 text-white shadow-md py-4 px-4 sticky top-0 z-30">
+    <div class="max-w-2xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl sm:text-4xl drop-shadow" role="img" aria-label="마을 아이콘">🏡</span>
+        <div>
+          <h1 class="font-cute text-2xl sm:text-3xl tracking-wide leading-tight drop-shadow-sm">우리 동네 상식 퀴즈</h1>
+          <p class="text-xs sm:text-sm text-amber-100 font-medium">할머니·할아버지 & 손주랑 함께 풀어요!</p>
+        </div>
+      </div>
+      <!-- Sound toggle button -->
+      <button id="soundToggleBtn" onclick="toggleSound()" class="bg-white/20 hover:bg-white/30 active:scale-95 transition-all text-white px-3 py-1.5 rounded-full flex items-center gap-1.5 text-sm font-bold shadow">
+        <span id="soundIcon">🔔</span>
+        <span id="soundText" class="hidden sm:inline">소리 켜짐</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-grow max-w-2xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
+
+    <!-- 1. Start Screen -->
+    <section id="startScreen" class="bg-white rounded-3xl shadow-xl p-6 sm:p-10 text-center border-4 border-amber-200 animate-pop">
+      <div class="inline-block p-4 bg-amber-100 rounded-full text-5xl sm:text-6xl mb-4 animate-gentle shadow-inner">
+        🏘️✨
+      </div>
+      <h2 class="font-cute text-3xl sm:text-4xl text-amber-900 mb-3 leading-snug">
+        동네 척척박사는 누구일까요?
+      </h2>
+      <p class="text-lg sm:text-xl text-slate-600 mb-6 leading-relaxed font-medium">
+        손주와 손 꼭 잡고 도란도란 맞춰보세요!<br>
+        쉬운 <strong class="text-orange-600 font-bold">5가지 동네 퀴즈</strong>가 준비되어 있어요.
+      </p>
+
+      <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-2xl p-4 sm:p-5 mb-8 text-left space-y-2">
+        <div class="flex items-center gap-2 text-base sm:text-lg font-bold text-amber-900">
+          <span>🌟</span> <span>퀴즈 규칙</span>
+        </div>
+        <p class="text-slate-700 text-sm sm:text-base flex items-center gap-2">
+          <span class="text-orange-500 font-bold">✓</span> 글씨가 크고 시원해서 읽기 아주 편해요.
+        </p>
+        <p class="text-slate-700 text-sm sm:text-base flex items-center gap-2">
+          <span class="text-orange-500 font-bold">✓</span> 정답을 맞히면 20점씩 점수가 올라가요! (100점 만점)
+        </p>
+        <p class="text-slate-700 text-sm sm:text-base flex items-center gap-2">
+          <span class="text-orange-500 font-bold">✓</span> 재미있는 칭찬 스티커와 팡파레가 팡팡!
+        </p>
+      </div>
+
+      <button onclick="startGame()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-cute text-2xl sm:text-3xl py-4 sm:py-5 px-8 rounded-2xl shadow-lg hover:shadow-xl transform active:scale-95 transition-all">
+        퀴즈 시작하기! 👉
+      </button>
+    </section>
+
+    <!-- 2. Quiz In-Progress Screen -->
+    <section id="quizScreen" class="hidden flex-col gap-4">
+      <!-- Status Bar (Progress & Score) -->
+      <div class="bg-white rounded-2xl shadow-md p-4 flex items-center justify-between border-2 border-amber-100">
+        <div class="flex items-center gap-2">
+          <span class="bg-amber-500 text-white font-cute text-lg px-3 py-1 rounded-xl shadow-sm" id="questionStep">문제 1 / 5</span>
+        </div>
+        <!-- Progress Bar -->
+        <div class="w-1/3 bg-slate-100 h-3 rounded-full overflow-hidden mx-2 hidden sm:block">
+          <div id="progressBar" class="bg-amber-400 h-full w-1/5 transition-all duration-300"></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-slate-500 font-bold text-sm sm:text-base">현재 점수:</span>
+          <span id="currentScore" class="font-cute text-2xl sm:text-3xl text-orange-600 font-black">0점</span>
+        </div>
+      </div>
+
+      <!-- Question Card -->
+      <div class="bg-white rounded-3xl shadow-xl p-6 sm:p-8 border-4 border-amber-200">
+        <!-- Question Category and Question Text -->
+        <div class="text-center mb-6">
+          <span id="questionTag" class="inline-block bg-orange-100 text-orange-800 text-sm sm:text-base font-bold px-3 py-1 rounded-full mb-3 shadow-xs">
+            동네 탐험
+          </span>
+          <h2 id="questionText" class="text-2xl sm:text-3xl font-bold text-slate-800 leading-snug break-keep">
+            문제 내용이 들어갑니다.
+          </h2>
+        </div>
+
+        <!-- 4 Multiple Choice Options (Large text & touch targets) -->
+        <div id="optionsContainer" class="grid grid-cols-1 gap-3 sm:gap-4 mb-4">
+          <!-- Dynamically populated buttons -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Result Screen -->
+    <section id="resultScreen" class="hidden bg-white rounded-3xl shadow-xl p-6 sm:p-10 text-center border-4 border-amber-200 animate-pop">
+      <div id="resultBadge" class="text-6xl sm:text-7xl mb-3 animate-gentle">
+        🏆
+      </div>
+      <h2 id="resultTitle" class="font-cute text-3xl sm:text-4xl text-amber-900 mb-2">
+        참 잘했어요!
+      </h2>
+      <p id="resultSubtitle" class="text-base sm:text-lg text-slate-600 mb-6 font-medium">
+        손주와 함께 만든 멋진 점수예요!
+      </p>
+
+      <!-- Score Box -->
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-3 border-amber-300 rounded-3xl p-6 mb-8 shadow-inner">
+        <span class="text-slate-500 text-lg font-bold">최종 점수</span>
+        <div class="font-cute text-6xl sm:text-7xl text-orange-600 my-2">
+          <span id="finalScore">100</span><span class="text-3xl text-slate-700">점</span>
+        </div>
+        <p id="resultComment" class="text-lg sm:text-xl font-bold text-slate-800 break-keep">
+          동네 구석구석을 훤히 꿰뚫고 있는 진정한 우리 동네 박사님!
+        </p>
+      </div>
+
+      <!-- Action Button -->
+      <button onclick="restartGame()" class="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-cute text-2xl sm:text-3xl py-4 sm:py-5 px-8 rounded-2xl shadow-lg hover:shadow-xl transform active:scale-95 transition-all flex items-center justify-center gap-3">
+        <span>🔄</span>
+        <span>처음부터 다시하기</span>
+      </button>
+    </section>
+
+  </main>
+
+  <!-- Feedback Modal Overlay (Displays immediately when an option is selected) -->
+  <div id="feedbackModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div id="modalCard" class="bg-white max-w-md w-full rounded-3xl shadow-2xl p-6 sm:p-8 text-center border-4 border-amber-300 animate-pop">
+      <!-- Big Icon -->
+      <div id="modalIcon" class="text-6xl sm:text-7xl mb-3">
+        🎉
+      </div>
+      <!-- Feedback Message -->
+      <h3 id="modalTitle" class="font-cute text-3xl sm:text-4xl text-amber-900 mb-2">
+        정답이에요! 짝짝짝!
+      </h3>
+      <!-- Score Gain Notice -->
+      <p id="modalScoreText" class="text-lg font-bold text-orange-600 mb-3">
+        +20점 획득! 🌟
+      </p>
+      <!-- Explanation / Praise description -->
+      <div class="bg-amber-50 rounded-2xl p-4 mb-6 border border-amber-200">
+        <p id="modalExplanation" class="text-base sm:text-lg text-slate-700 font-medium break-keep leading-relaxed">
+          우리 손주와 할머니의 완벽한 콤비! 정말 대단해요!
+        </p>
+      </div>
+      <!-- Next Question Button -->
+      <button id="modalNextBtn" onclick="nextQuestion()" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-cute text-2xl py-3.5 sm:py-4 px-6 rounded-2xl shadow-md transform active:scale-95 transition-all">
+        다음 문제 풀기 ➡️
+      </button>
+    </div>
+  </div>
+
+  <footer class="bg-amber-100/70 border-t border-amber-200 py-3 text-center text-xs sm:text-sm text-slate-500">
+    <p>우리 동네 이야기 나누며 함께하는 행복한 상식 퀴즈 🌷</p>
+  </footer>
+
+  <script>
+    /* Web Audio API - Built-in sounds (No external sound files required) */
+    let audioCtx = null;
+    let isSoundEnabled = true;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioCtx = new AudioContext();
+        }
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Sound effect: Correct Answer (Bright joyful chime)
+    function playCorrectSound() {
+      if (!isSoundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (Bright Arpeggio)
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.1);
+        
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.1 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(audioCtx.currentTime + idx * 0.1);
+        osc.stop(audioCtx.currentTime + idx * 0.1 + 0.35);
+      });
+    }
+
+    // Sound effect: Gentle Encouragement sound (Softer chord)
+    function playEncouragementSound() {
+      if (!isSoundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const freqs = [392.00, 329.63]; // G4, E4
+      freqs.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.15);
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime + idx * 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.15 + 0.3);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(audioCtx.currentTime + idx * 0.15);
+        osc.stop(audioCtx.currentTime + idx * 0.15 + 0.3);
+      });
+    }
+
+    // Sound effect: Click sound
+    function playClickSound() {
+      if (!isSoundEnabled) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.08);
+    }
+
+    // Toggle sound on/off
+    function toggleSound() {
+      isSoundEnabled = !isSoundEnabled;
+      const soundIcon = document.getElementById('soundIcon');
+      const soundText = document.getElementById('soundText');
+      if (isSoundEnabled) {
+        soundIcon.textContent = '🔔';
+        soundText.textContent = '소리 켜짐';
+        playClickSound();
+      } else {
+        soundIcon.textContent = '🔕';
+        soundText.textContent = '소리 꺼짐';
+      }
+    }
+
+    // 5 tailored neighborhood trivia questions (Friendly for both grandparents & grandkids)
+    const quizData = [
+      {
+        tag: "🚦 안전한 우리 동네",
+        question: "손주 손잡고 건널목을 건널 때, 신호등이 어떤 색일 때 건너야 할까요?",
+        options: [
+          "빨간 불 🛑",
+          "초록 불 🟢",
+          "노란 불 🟡",
+          "깜빡이는 파란 불 🔵"
+        ],
+        answer: 1, // index 1 is 초록 불
+        praise: "딩동댕! 초록 불에 좌우를 살피며 씩씩하게 건너는 우리는 안전 지킴이 가족이에요!",
+        hint: "정답은 '초록 불'이에요! 길을 건널 땐 초록 불이라도 차가 멈췄는지 꼭 확인해요."
+      },
+      {
+        tag: "📮 우리 동네 명소",
+        question: "할머니, 손주에게 마음을 담은 손편지를 보내려면 동네 어디로 가야 할까요?",
+        options: [
+          "우체국 📮",
+          "소방서 🚒",
+          "세탁소 👔",
+          "미용실 ✂️"
+        ],
+        answer: 0,
+        praise: "정답이에요! 빨간 우체통과 우체국이 반갑게 편지를 전해줍니다. 멋진 편지 한 통 써볼까요?",
+        hint: "정답은 '우체국'이에요! 빨간 우체통에 편지를 넣으면 집배원 아저씨가 배달해 주신답니다."
+      },
+      {
+        tag: "♻️ 깨끗한 우리 마을",
+        question: "맛있게 다 마신 투명 생수 페트병은 어떻게 버려야 동네가 깨끗해질까요?",
+        options: [
+          "물기를 가득 채워서 버려요",
+          "라벨 스티커를 떼고 찌그러뜨려서 투명 페트병에 넣어요",
+          "흙을 채워서 일반 쓰레기에 버려요",
+          "길거리에 살짝 두고 와요"
+        ],
+        answer: 1,
+        praise: "최고예요! 라벨을 쏙 떼고 꾹 밟아서 버리면 재활용 왕! 우리 동네 환경 지킴이 탄생!",
+        hint: "정답은 '라벨을 떼고 찌그러뜨려 분리수거'예요! 비닐 라벨을 떼면 옷이나 가방으로 재탄생한답니다."
+      },
+      {
+        tag: "📚 즐거운 우리 동네",
+        question: "동네에서 재미있는 동화책과 유익한 책을 마음껏 빌려 읽을 수 있는 곳은 어디일까요?",
+        options: [
+          "주유소 ⛽",
+          "정육점 🥩",
+          "동네 도서관 📖",
+          "카센터 🚗"
+        ],
+        answer: 2,
+        praise: "맞았어요! 지혜가 쑥쑥 자라는 도서관! 이번 주말 손주랑 함께 손잡고 가보시는 건 어떨까요?",
+        hint: "정답은 '동네 도서관'이에요! 조용히 책을 읽고 마음의 양식을 쌓는 소중한 쉼터랍니다."
+      },
+      {
+        tag: "🚨 든든한 이웃",
+        question: "동네에 불이 나거나 응급환자가 생겼을 때 바로 달려와 도와주시는 고마운 분들은 누구일까요?",
+        options: [
+          "소방관 아저씨 👨‍🚒",
+          "우주비행사 🧑‍🚀",
+          "마술사 🎩",
+          "해적 선장 🏴‍☠️"
+        ],
+        answer: 0,
+        praise: "우와, 100점 만점에 도전 성공! 밤낮없이 우리 동네를 지켜주시는 소방관 삼촌들 최고!",
+        hint: "정답은 삐뽀삐뽀 빨간 소방차를 타는 '소방관'이에요! 119로 전화하면 언제든 달려와 주신답니다."
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    // Start game
+    function startGame() {
+      playClickSound();
+      currentQuestionIndex = 0;
+      score = 0;
+
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('resultScreen').classList.add('hidden');
+      document.getElementById('quizScreen').classList.remove('hidden');
+      document.getElementById('quizScreen').classList.add('flex');
+
+      renderQuestion();
+    }
+
+    // Render current question
+    function renderQuestion() {
+      const q = quizData[currentQuestionIndex];
+      const totalQuestions = quizData.length;
+
+      // Update Header info
+      document.getElementById('questionStep').textContent = `문제 ${currentQuestionIndex + 1} / ${totalQuestions}`;
+      document.getElementById('currentScore').textContent = `${score}점`;
+      document.getElementById('progressBar').style.width = `${((currentQuestionIndex + 1) / totalQuestions) * 100}%`;
+
+      // Update Question
+      document.getElementById('questionTag').textContent = q.tag;
+      document.getElementById('questionText').textContent = q.question;
+
+      // Render 4-choice buttons
+      const container = document.getElementById('optionsContainer');
+      container.innerHTML = '';
+
+      q.options.forEach((optText, idx) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `w-full text-left p-4 sm:p-5 rounded-2xl border-2 sm:border-3 border-amber-200 hover:border-amber-400 bg-amber-50/50 hover:bg-amber-100 text-slate-800 font-bold text-lg sm:text-2xl transition-all duration-150 flex items-center gap-3 sm:gap-4 shadow-sm hover:shadow active:scale-[0.98]`;
+        
+        // Option number badge
+        const numBadge = document.createElement('span');
+        numBadge.className = 'w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-white border-2 border-amber-400 text-amber-700 flex items-center justify-center font-cute text-lg sm:text-2xl flex-shrink-0 shadow-sm';
+        numBadge.textContent = idx + 1;
+
+        const textSpan = document.createElement('span');
+        textSpan.className = 'flex-grow break-keep leading-snug';
+        textSpan.textContent = optText;
+
+        btn.appendChild(numBadge);
+        btn.appendChild(textSpan);
+
+        btn.onclick = () => handleAnswerSelect(idx);
+        container.appendChild(btn);
+      });
+    }
+
+    function handleAnswerSelect(selectedIndex) {
+      const q = quizData[currentQuestionIndex];
+      const isCorrect = selectedIndex === q.answer;
+
+      const modal = document.getElementById('feedbackModal');
+      const modalIcon = document.getElementById('modalIcon');
+      const modalTitle = document.getElementById('modalTitle');
+      const modalScoreText = document.getElementById('modalScoreText');
+      const modalExplanation = document.getElementById('modalExplanation');
+      const modalNextBtn = document.getElementById('modalNextBtn');
+
+      if (isCorrect) {
+        score += 20;
+        playCorrectSound();
+
+        // Confetti celebration
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.6 }
+          });
+        } catch (e) {}
+
+        modalIcon.textContent = "🎉";
+        modalTitle.textContent = "정답이에요! 참 잘했어요!";
+        modalTitle.className = "font-cute text-3xl sm:text-4xl text-orange-600 mb-2";
+        modalScoreText.textContent = "+20점 획득! 🌟";
+        modalScoreText.classList.remove('hidden');
+        modalExplanation.innerHTML = `👏 <strong>${q.praise}</strong>`;
+      } else {
+        playEncouragementSound();
+        modalIcon.textContent = "💪";
+        modalTitle.textContent = "아쉬워요! 함께 배워봐요";
+        modalTitle.className = "font-cute text-3xl sm:text-4xl text-amber-800 mb-2";
+        modalScoreText.classList.add('hidden');
+        modalExplanation.innerHTML = `💡 ${q.hint}<br><br><span class="text-orange-700 font-bold">다음 문제에서 힘차게 만회해 볼까요?</span>`;
+      }
+
+      // Check if it's the last question
+      if (currentQuestionIndex >= quizData.length - 1) {
+        modalNextBtn.textContent = "결과 보러 가기 🏆";
+      } else {
+        modalNextBtn.textContent = "다음 문제 풀기 ➡️";
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    // Go to next question or show final score
+    function nextQuestion() {
+      playClickSound();
+      document.getElementById('feedbackModal').classList.add('hidden');
+      currentQuestionIndex++;
+
+      if (currentQuestionIndex < quizData.length) {
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      document.getElementById('quizScreen').classList.remove('flex');
+      document.getElementById('quizScreen').classList.add('hidden');
+
+      const resultScreen = document.getElementById('resultScreen');
+      resultScreen.classList.remove('hidden');
+
+      document.getElementById('finalScore').textContent = score;
+
+      const badge = document.getElementById('resultBadge');
+      const title = document.getElementById('resultTitle');
+      const subtitle = document.getElementById('resultSubtitle');
+      const comment = document.getElementById('resultComment');
+
+      if (score === 100) {
+        badge.textContent = "👑";
+        title.textContent = "우와! 100점 만점 척척박사!";
+        subtitle.textContent = "할머니·할아버지와 손주의 환상적인 호흡!";
+        comment.textContent = "우리 동네 모든 길과 상식을 완벽하게 꿰뚫고 계시네요! 동네 으뜸 박사님으로 임명합니다! 🏅";
+        // Big confetti explosion
+        try {
+          confetti({
+            particleCount: 100,
+            spread: 100,
+            origin: { y: 0.5 }
+          });
+        } catch(e) {}
+      } else if (score >= 60) {
+        badge.textContent = "🌟";
+        title.textContent = "훌륭해요! 동네 지킴이 우수상!";
+        subtitle.textContent = "손주랑 다정하게 퀴즈를 모두 완주했어요!";
+        comment.textContent = "조금만 더 하면 100점도 거뜬해요! 함께 웃으며 푼 오늘의 시간이 최고의 만점입니다! 💖";
+      } else {
+        badge.textContent = "🌱";
+        title.textContent = "도전 완료! 참 다정한 가족!";
+        subtitle.textContent = "함께 이야기를 나누며 재미있게 배웠어요!";
+        comment.textContent = "손주 손잡고 동네를 한 바퀴 둘러보며 다시 한번 도전해보세요! 언제나 환영해요! 🌸";
+      }
+    }
+
+    // Restart game
+    function restartGame() {
+      playClickSound();
+      startGame();
+    }
+  </script>
+</body>
+</html>
